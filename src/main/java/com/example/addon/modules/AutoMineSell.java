@@ -1,4 +1,4 @@
-package addon.modules;
+package com.example.addon.modules;
 
 import baritone.api.BaritoneAPI;
 import meteordevelopment.meteorclient.events.world.TickEvent;
