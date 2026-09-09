@@ -5,11 +5,11 @@ import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
+import meteordevelopment.meteorclient.utils.player.InvUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.block.Block;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 
 import java.util.List;
 
@@ -65,7 +65,7 @@ public class AutoMineSell extends Module {
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null || mc.level == null) return;
 
         timer++;
         if (timer < checkDelay.get()) return;
@@ -91,9 +91,9 @@ public class AutoMineSell extends Module {
         if (trashItems.get().isEmpty()) return;
 
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
             if (!stack.isEmpty() && trashItems.get().contains(stack.getItem())) {
-                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 1, SlotActionType.THROW, mc.player);
+                InvUtils.drop().slot(i);
             }
         }
     }
@@ -102,7 +102,7 @@ public class AutoMineSell extends Module {
         int emptySlot = -1;
 
         for (int i = 9; i <= 35; i++) {
-            if (mc.player.currentScreenHandler.getSlot(i).getStack().isEmpty()) {
+            if (mc.player.containerMenu.getSlot(i).getItem().isEmpty()) {
                 emptySlot = i;
                 break;
             }
@@ -111,14 +111,9 @@ public class AutoMineSell extends Module {
         if (emptySlot == -1) return;
 
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
             if (isTargetItem(stack) && stack.getCount() > 1) {
-                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 1, SlotActionType.PICKUP, mc.player);
-                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, emptySlot, 0, SlotActionType.PICKUP, mc.player);
-
-                if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
-                    mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 0, SlotActionType.PICKUP, mc.player);
-                }
+                InvUtils.move().from(i).to(emptySlot);
                 break;
             }
         }
@@ -126,8 +121,8 @@ public class AutoMineSell extends Module {
 
     private boolean isInventoryFullyStacked() {
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
-            if (!isTargetItem(stack) || stack.getCount() < stack.getMaxCount()) {
+            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
+            if (!isTargetItem(stack) || stack.getCount() < stack.getMaxStackSize()) {
                 return false;
             }
         }
@@ -137,7 +132,7 @@ public class AutoMineSell extends Module {
     private int getTotalTargetCount() {
         int total = 0;
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
             if (isTargetItem(stack)) {
                 total += stack.getCount();
             }
@@ -154,7 +149,7 @@ public class AutoMineSell extends Module {
 
         StringBuilder command = new StringBuilder("#mine ");
         for (Block block : targetBlocks.get()) {
-            String blockName = block.getTranslationKey().replace("block.minecraft.", "");
+            String blockName = block.getDescriptionId().replace("block.minecraft.", "");
             command.append(blockName).append(" ");
         }
 
