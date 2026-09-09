@@ -6,10 +6,10 @@ import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.world.inventory.ClickType;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.List;
 
@@ -65,7 +65,7 @@ public class AutoMineSell extends Module {
 
     @EventHandler
     private void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.level == null) return;
+        if (mc.player == null || mc.world == null) return;
 
         timer++;
         if (timer < checkDelay.get()) return;
@@ -91,9 +91,9 @@ public class AutoMineSell extends Module {
         if (trashItems.get().isEmpty()) return;
 
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
             if (!stack.isEmpty() && trashItems.get().contains(stack.getItem())) {
-                mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, i, 1, ClickType.THROW, mc.player);
+                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 1, SlotActionType.THROW, mc.player);
             }
         }
     }
@@ -102,7 +102,7 @@ public class AutoMineSell extends Module {
         int emptySlot = -1;
 
         for (int i = 9; i <= 35; i++) {
-            if (mc.player.containerMenu.getSlot(i).getItem().isEmpty()) {
+            if (mc.player.currentScreenHandler.getSlot(i).getStack().isEmpty()) {
                 emptySlot = i;
                 break;
             }
@@ -111,13 +111,13 @@ public class AutoMineSell extends Module {
         if (emptySlot == -1) return;
 
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
             if (isTargetItem(stack) && stack.getCount() > 1) {
-                mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, i, 1, ClickType.PICKUP, mc.player);
-                mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, emptySlot, 0, ClickType.PICKUP, mc.player);
+                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 1, SlotActionType.PICKUP, mc.player);
+                mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, emptySlot, 0, SlotActionType.PICKUP, mc.player);
 
-                if (!mc.player.containerMenu.getCarried().isEmpty()) {
-                    mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId, i, 0, ClickType.PICKUP, mc.player);
+                if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
+                    mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, i, 0, SlotActionType.PICKUP, mc.player);
                 }
                 break;
             }
@@ -126,8 +126,8 @@ public class AutoMineSell extends Module {
 
     private boolean isInventoryFullyStacked() {
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
-            if (!isTargetItem(stack) || stack.getCount() < stack.getMaxStackSize()) {
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
+            if (!isTargetItem(stack) || stack.getCount() < stack.getMaxCount()) {
                 return false;
             }
         }
@@ -137,7 +137,7 @@ public class AutoMineSell extends Module {
     private int getTotalTargetCount() {
         int total = 0;
         for (int i = 9; i <= 35; i++) {
-            ItemStack stack = mc.player.containerMenu.getSlot(i).getItem();
+            ItemStack stack = mc.player.currentScreenHandler.getSlot(i).getStack();
             if (isTargetItem(stack)) {
                 total += stack.getCount();
             }
@@ -154,7 +154,7 @@ public class AutoMineSell extends Module {
 
         StringBuilder command = new StringBuilder("#mine ");
         for (Block block : targetBlocks.get()) {
-            String blockName = block.getDescriptionId().replace("block.minecraft.", "");
+            String blockName = block.getTranslationKey().replace("block.minecraft.", "");
             command.append(blockName).append(" ");
         }
 
