@@ -1,7 +1,7 @@
 package com.example.addon.mixin;
 
 import com.example.addon.AddonTemplate;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.main.GameConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
